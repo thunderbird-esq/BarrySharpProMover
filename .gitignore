@@ -21,3 +21,5 @@ node_modules/
 *.png
 *.mod
 *.wav
+assets.bak/
+*.swp

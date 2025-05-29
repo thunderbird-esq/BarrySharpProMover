@@ -1,0 +1,23 @@
+# build artefacts
+/builds/
+/out/
+/dist/
+/*.pocket
+
+# local IDE caches
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# OS cruft
+.DS_Store
+
+# GB Studio autosaves
+*.gbsproj.bak
+
+# Optional: Git LFS will handle these
+*.png
+*.mod
+*.wav

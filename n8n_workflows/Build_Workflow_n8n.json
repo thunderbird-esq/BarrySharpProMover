@@ -1,0 +1,158 @@
+{
+  "name": "Game Build Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Manual Build Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "id": "manual-build-trigger"
+    },
+    {
+      "parameters": {
+        "command": "git pull --ff-only",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Git Pull",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "id": "git-pull"
+    },
+    {
+      "parameters": {
+        "command": "sh scripts/sync_gbsres.sh",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Sync GBS Resources",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "id": "sync-gbs-resources",
+      "notes": "Assumes scripts/sync_gbsres.sh exists. Path might need adjustment if moved to tools/."
+    },
+    {
+      "parameters": {
+        "command": "python tools/gbstudio_build.py --project_dir . --target rom",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Build ROM via GBStudio Build Script",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        700,
+        300
+      ],
+      "id": "build-rom"
+    },
+    {
+      "parameters": {
+        "command": "open -a OpenEmu $(ls -t builds/BarrySharp-*.gb | head -1)",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Launch in OpenEmu (macOS)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ],
+      "id": "launch-openemu",
+      "notes": "This is macOS specific and assumes a `builds` directory with a naming convention like BarrySharp-*.gb. The `ls -t ... | head -1` part might be fragile."
+    },
+    {
+      "parameters": {
+        "command": "sh tools/notify_cli.sh \"Build process completed.\"",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Notify Build Completion",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "id": "notify-build-completion"
+    }
+  ],
+  "connections": {
+    "Manual Build Trigger": {
+      "main": [
+        [
+          {
+            "node": "Git Pull",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Git Pull": {
+      "main": [
+        [
+          {
+            "node": "Sync GBS Resources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sync GBS Resources": {
+      "main": [
+        [
+          {
+            "node": "Build ROM via GBStudio Build Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build ROM via GBStudio Build Script": {
+      "main": [
+        [
+          {
+            "node": "Launch in OpenEmu (macOS)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Launch in OpenEmu (macOS)": {
+      "main": [
+        [
+          {
+            "node": "Notify Build Completion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "build-workflow"
+}

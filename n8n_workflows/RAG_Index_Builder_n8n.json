@@ -1,0 +1,211 @@
+{
+  "name": "RAG Index Builder",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "id": "manual-trigger-builder"
+    },
+    {
+      "parameters": {
+        "path": "docs/",
+        "options": {}
+      },
+      "name": "List Files from Docs",
+      "type": "n8n-nodes-base.listFiles",
+      "typeVersion": 1,
+      "position": [
+        300,
+        300
+      ],
+      "id": "list-files-docs"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Loop Through Files",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "id": "loop-files"
+    },
+    {
+      "parameters": {
+        "fileName": "={{ $json.fileName || $json.name }}",
+        "options": {}
+      },
+      "name": "Read Each File",
+      "type": "n8n-nodes-base.readFile",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        300
+      ],
+      "id": "read-each-file"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Placeholder: Split text into chunks\n// Input: $items[0].json.fileContent (or .binary.data if binary file was read)\n// Output: Array of text chunks, e.g., [{json: {chunk: \"text chunk 1\"}}, {json: {chunk: \"text chunk 2\"}}]\nconst text = $items[0].json.fileContent || ($items[0].binary ? $items[0].binary.data.toString() : '');\nconst chunkSize = 1000; // characters\nlet chunks = [];\nfor (let i = 0; i < text.length; i += chunkSize) {\n  chunks.push({ json: { chunk: text.substring(i, i + chunkSize), sourceFile: $items[0].json.fileName } });\n}\nif (chunks.length === 0 && text.length > 0) { // Handle case where text is smaller than chunksize\n    chunks.push({ json: { chunk: text, sourceFile: $items[0].json.fileName } });\n}\nconsole.log(`Splitting file ${$items[0].json.fileName} into ${chunks.length} chunks.`);\nreturn chunks;"
+      },
+      "name": "Split Text in Chunks",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ],
+      "id": "split-text-chunks"
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "name": "Loop Through Chunks",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        300
+      ],
+      "id": "loop-chunks"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:11434/api/embeddings",
+        "options": {
+          "model": "nomic-embed-text"
+        },
+        "bodyParametersJson": "{\n  \"model\": \"nomic-embed-text\",\n  \"prompt\": \"{{ $json.chunk }}\"\n}",
+        "sendQuery": true
+      },
+      "name": "HTTP Request (Ollama Embeddings - Placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        300
+      ],
+      "notes": "Placeholder: Calls Ollama's embedding API for each chunk.\nModel: nomic-embed-text\nReceives: chunk\nOutputs: embedding",
+      "id": "ollama-embeddings-placeholder"
+    },
+    {
+      "parameters": {
+        "command": "python scripts/manage_faiss.py add",
+        "args": [
+          "--index_path",
+          "vector_store/faiss_index.bin",
+          "--metadata_path",
+          "vector_store/metadata.pkl",
+          "--texts",
+          "{{ $json.chunk }}",
+          "--embeddings",
+          "{{ JSON.stringify([$items[0].json.embedding]) }}"
+        ],
+        "options": {}
+      },
+      "name": "Execute Command (Add to FAISS - Placeholder)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        300
+      ],
+      "notes": "Placeholder: Calls python scripts/manage_faiss.py add ... with the text chunk and its embedding.",
+      "id": "execute-add-faiss"
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "List Files from Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Files from Docs": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Files": {
+      "main": [
+        [
+          {
+            "node": "Read Each File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Each File": {
+      "main": [
+        [
+          {
+            "node": "Split Text in Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Text in Chunks": {
+      "main": [
+        [
+          {
+            "node": "Loop Through Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Through Chunks": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Ollama Embeddings - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Ollama Embeddings - Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Execute Command (Add to FAISS - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "rag-index-builder"
+}

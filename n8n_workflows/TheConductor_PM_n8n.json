@@ -1,0 +1,176 @@
+{
+  "name": "TheConductor PM Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "User Command Input",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "user-command-input"
+    },
+    {
+      "parameters": {
+        "functionCode": "// This function is intended to call an LLM to parse the user command.\nconsole.log('Parse User Command (Placeholder): Preparing to simulate LLM call.');\n\n// Assuming the input from the webhook is in $items[0].json\nconst userInput = $items[0].json;\n\n// 1. Log that it's intended to call an LLM for parsing.\nconsole.log('Input received:', JSON.stringify(userInput));\n\n// 2. Include a conceptual example of how it might prepare data for an LLM API call.\n// Example: Constructing a prompt string from the input.\n// Let's assume userInput has a 'command' field.\nconst userCommandText = userInput.body?.command || \"default command if not found\"; // n8n webhook often puts POST body in `body`\nconst prompt = `\nParse the following user command to identify the command type, target agent, and any parameters.\nCommand: \"${userCommandText}\"\n\nReturn the output as a JSON object with fields: \"command_type\", \"target_agent\", \"parameters\".\nExample:\n{\n  \"command_type\": \"file_operation\",\n  \"target_agent\": \"FileEditAgent\",\n  \"parameters\": {\n    \"action\": \"create\",\n    \"file_path\": \"path/to/file.txt\",\n    \"content\": \"Hello world\"\n  }\n}\n`;\nconsole.log('Simulated prompt for LLM:', prompt);\n\n// 3. Simulate receiving an LLM response.\n// This would typically be an HTTP request node call to an LLM API.\n// For now, we'll mock the response.\nlet simulatedLLMResponse = {};\n\n// Simulate different responses based on input for demonstration\nif (userCommandText.toLowerCase().includes(\"approve task\")) {\n  simulatedLLMResponse = {\n    command_type: \"approval\",\n    target_agent: \"ApprovalAgent\",\n    parameters: {\n      task_id: \"task123\",\n      decision: \"approved\"\n    }\n  };\n} else if (userCommandText.toLowerCase().includes(\"log message\")) {\n  simulatedLLMResponse = {\n    command_type: \"log\",\n    target_agent: \"LoggingAgent\",\n    parameters: {\n      message: \"User requested something to be logged.\",\n      level: \"INFO\"\n    }\n  };\n} else if (userCommandText.toLowerCase().includes(\"update project\")) {\n  simulatedLLMResponse = {\n    command_type: \"update_project\",\n    target_agent: \"ProjectStateAgent\",\n    parameters: {\n      project_id: \"project_abc\",\n      status: \"in_progress\"\n    }\n  };\n} else {\n   simulatedLLMResponse = {\n    command_type: \"unknown\",\n    target_agent: \"DefaultAgent\",\n    parameters: {\n      original_command: userCommandText\n    }\n  };\n}\n\nconsole.log('Simulated LLM Response:', JSON.stringify(simulatedLLMResponse));\n\n// 4. Return this simulated LLM response as its output.\n// The $items variable expects an array of objects, each with a json property.\nreturn [{ json: simulatedLLMResponse }];"
+      },
+      "name": "Parse User Command (Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "id": "parse-user-command"
+    },
+    {
+      "parameters": {
+        "filePath": ".langflow/agents/registry.json"
+      },
+      "name": "Read Agent Registry",
+      "type": "n8n-nodes-base.readFile",
+      "typeVersion": 1,
+      "position": [
+        500,
+        500
+      ],
+      "id": "read-agent-registry"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "rules": [
+            {
+              "value1": "{{$json.command_type}}",
+              "operation": "equals",
+              "value2": "approval"
+            },
+            {
+              "value1": "{{$json.command_type}}",
+              "operation": "equals",
+              "value2": "log"
+            },
+            {
+              "value1": "{{$json.command_type}}",
+              "operation": "equals",
+              "value2": "update_project"
+            }
+          ]
+        }
+      },
+      "name": "Route Task",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ],
+      "id": "route-task"
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst approvalQueuePath = 'memory/approval_queue.json';\nlet items = $items; // Input items\nlet inputData = items[0].json; // Data from previous node\n\nconsole.log('[Handle Approval Queue] Received data:', JSON.stringify(inputData));\n\nlet queueData = { queue: [] };\n\ntry {\n  if (fs.existsSync(approvalQueuePath)) {\n    const fileContent = fs.readFileSync(approvalQueuePath, 'utf8');\n    queueData = JSON.parse(fileContent);\n    console.log('[Handle Approval Queue] Successfully read approval queue.');\n  } else {\n    console.log('[Handle Approval Queue] Approval queue file does not exist. Initializing new one.');\n  }\n} catch (error) {\n  console.error('[Handle Approval Queue] Error reading or parsing approval queue:', error.message, error.stack);\n  // Return original data or error structure if read fails critically\n  items[0].json.error = `Error reading approval queue: ${error.message}`;\n  return items;\n}\n\n// Placeholder modification: Add a new item or modify an existing one\n// This example adds a new item based on inputData\nconst newItem = {\n  task_id: inputData.task_id || `task_${Date.now()}`,\n  status: inputData.new_status || 'pending_approval',\n  details: inputData.details || 'No details provided.',\n  submitted_at: new Date().toISOString(),\n  processed_by_node: 'Handle Approval Queue (Placeholder)'\n};\nqueueData.queue.push(newItem);\nconsole.log('[Handle Approval Queue] Added new item to queue:', JSON.stringify(newItem));\n\ntry {\n  fs.writeFileSync(approvalQueuePath, JSON.stringify(queueData, null, 2), 'utf8');\n  console.log('[Handle Approval Queue] Successfully wrote updated approval queue.');\n} catch (error) {\n  console.error('[Handle Approval Queue] Error writing approval queue:', error.message, error.stack);\n  items[0].json.error = `Error writing approval queue: ${error.message}`;\n  return items;\n}\n\nitems[0].json.approval_queue_update_status = 'success';\nitems[0].json.updated_queue_snippet = queueData.queue.slice(-5); // Return a snippet of the updated queue\n\nreturn items;"
+      },
+      "name": "Handle Approval Queue (Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        200
+      ],
+      "id": "handle-approval-queue"
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst ledgerPath = 'memory/pm_ledger.jsonl';\nlet items = $items; // Input items\nlet logData = items[0].json; // Data to log from previous node\n\nconsole.log('[Log to Ledger] Received data for logging:', JSON.stringify(logData));\n\nconst logEntry = {\n  timestamp: new Date().toISOString(),\n  event_source: 'n8n_workflow',\n  node_name: 'Log to Ledger (Placeholder)', // Or get dynamically if possible\n  data: logData\n};\n\nconst logEntryString = JSON.stringify(logEntry);\n\ntry {\n  fs.appendFileSync(ledgerPath, logEntryString + '\\n', 'utf8');\n  console.log('[Log to Ledger] Successfully appended entry to ledger:', logEntryString);\n} catch (error) {\n  console.error('[Log to Ledger] Error appending to ledger:', error.message, error.stack);\n  items[0].json.error = `Error appending to ledger: ${error.message}`;\n  return items;\n}\n\nitems[0].json.ledger_log_status = 'success';\nreturn items;"
+      },
+      "name": "Log to Ledger (Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        300
+      ],
+      "id": "log-to-ledger"
+    },
+    {
+      "parameters": {
+        "functionCode": "const fs = require('fs');\nconst projectMemPath = 'memory/project_mem.json';\nlet items = $items; // Input items\nlet inputData = items[0].json; // Data from previous node for updating state\n\nconsole.log('[Update Project State] Received data:', JSON.stringify(inputData));\n\nlet projectState = {};\n\ntry {\n  if (fs.existsSync(projectMemPath)) {\n    const fileContent = fs.readFileSync(projectMemPath, 'utf8');\n    projectState = JSON.parse(fileContent);\n    console.log('[Update Project State] Successfully read project state.');\n  } else {\n    console.log('[Update Project State] Project state file does not exist. Initializing new one.');\n  }\n} catch (error) {\n  console.error('[Update Project State] Error reading or parsing project state:', error.message, error.stack);\n  items[0].json.error = `Error reading project state: ${error.message}`;\n  return items;\n}\n\n// Placeholder modification: Update or add a key based on inputData\n// Example: update project status or add a new module's state\nprojectState.last_updated_by_node = 'Update Project State (Placeholder)';\nprojectState.last_update_timestamp = new Date().toISOString();\nif (inputData.project_status) {\n  projectState.status = inputData.project_status;\n}\nif (inputData.module_update) {\n  projectState[inputData.module_update.name] = inputData.module_update.data;\n}\nconsole.log('[Update Project State] Modified project state:', JSON.stringify(projectState, null, 2).substring(0, 500) + '...');\n\n\ntry {\n  fs.writeFileSync(projectMemPath, JSON.stringify(projectState, null, 2), 'utf8');\n  console.log('[Update Project State] Successfully wrote updated project state.');\n} catch (error) {\n  console.error('[Update Project State] Error writing project state:', error.message, error.stack);\n  items[0].json.error = `Error writing project state: ${error.message}`;\n  return items;\n}\n\nitems[0].json.project_state_update_status = 'success';\nitems[0].json.updated_project_state_snippet = projectState; // Return a snippet\n\nreturn items;"
+      },
+      "name": "Update Project State (Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        1000,
+        400
+      ],
+      "id": "update-project-state"
+    }
+  ],
+  "connections": {
+    "User Command Input": {
+      "main": [
+        [
+          {
+            "node": "Parse User Command (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse User Command (Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Route Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Agent Registry": {
+      "main": [
+        [
+          {
+            "node": "Route Task",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Route Task": {
+      "main": [
+        [
+          {
+            "node": "Handle Approval Queue (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log to Ledger (Placeholder)",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Update Project State (Placeholder)",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "theconductor-pm-workflow"
+}

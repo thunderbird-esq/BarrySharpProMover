@@ -1,0 +1,177 @@
+{
+  "name": "RAG Retriever",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "user-query",
+        "options": {}
+      },
+      "name": "Webhook Trigger (User Query)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "user-query-rag",
+      "id": "webhook-trigger-retriever"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:11434/api/embeddings",
+        "options": {
+          "model": "nomic-embed-text"
+        },
+        "bodyParametersJson": "{\n  \"model\": \"nomic-embed-text\",\n  \"prompt\": \"{{ $json.body.query || $json.query.query || $json.params.query || 'default query' }}\"\n}",
+        "sendQuery": true
+      },
+      "name": "HTTP Request (Ollama Embeddings for Query - Placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        350,
+        300
+      ],
+      "notes": "Placeholder: Gets embedding for the user's query using nomic-embed-text.\nAssumes query is in `body.query`, `query.query` or `params.query`.",
+      "id": "ollama-query-embedding"
+    },
+    {
+      "parameters": {
+        "command": "python scripts/manage_faiss.py search",
+        "args": [
+          "--index_path",
+          "vector_store/faiss_index.bin",
+          "--metadata_path",
+          "vector_store/metadata.pkl",
+          "--query_embedding",
+          "{{ JSON.stringify($items[0].json.embedding) }}",
+          "--k",
+          "3"
+        ],
+        "options": {}
+      },
+      "name": "Execute Command (Search FAISS - Placeholder)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        600,
+        300
+      ],
+      "notes": "Placeholder: Calls python scripts/manage_faiss.py search ... with the query embedding. Outputs retrieved text chunks (JSON string from stdout).",
+      "id": "execute-search-faiss"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Placeholder: Combine retrieved text chunks into a single context string.\n// Input: $items[0].json.stdout (which is a JSON string from manage_faiss.py)\nlet retrievedItems = [];\ntry {\n  retrievedItems = JSON.parse($items[0].json.stdout);\n} catch (e) {\n  console.error('Error parsing stdout from FAISS search:', e, $items[0].json.stdout);\n  // Fallback or error handling if stdout is not valid JSON\n  return [{ json: { formatted_context: \"Error: Could not parse retrieved documents.\", original_query: $items[0].json.query } }]; \n}\n\nlet context = \"Retrieved documents:\\n\";\nif (Array.isArray(retrievedItems)) {\n  retrievedItems.forEach((item, index) => {\n    context += `Document ${index + 1} (Source: ${item.index_position}, Distance: ${item.distance}):\\n${item.text}\\n\\n`;\n  });\n} else {\n  context += \"No documents retrieved or error in parsing.\";\n}\n\n// Make sure original query is passed along if it exists in an earlier node's output\n// For this example, let's assume the query embedding node still has the original query\n// or it was passed to the execute command node and is available in its input.\n// For simplicity, we'll just create a placeholder here.\nconst originalQuery = $items[0].json.query || 'original query not found'; \n\nconsole.log(\"Formatted context:\", context);\nreturn [{ json: { formatted_context: context, original_query: originalQuery } }];"
+      },
+      "name": "Function (Format Context - Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        850,
+        300
+      ],
+      "id": "format-context"
+    },
+    {
+      "parameters": {
+        "url": "http://localhost:11434/api/generate",
+        "options": {
+          "model": "mistral"
+        },
+        "bodyParametersJson": "{\n  \"model\": \"mistral\",\n  \"prompt\": \"User Query: {{ $json.original_query }}\\n\\nContext:\\n{{ $json.formatted_context }}\\n\\nBased on the context, please answer the user query.\",\n  \"stream\": false\n}",
+        "sendQuery": true
+      },
+      "name": "HTTP Request (LLM for Q&A - Placeholder)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1100,
+        300
+      ],
+      "notes": "Placeholder: Sends original query and formatted context to an LLM (e.g., Ollama with mistral) for generating an answer.",
+      "id": "llm-qa-placeholder"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "finalAnswer",
+              "value": "={{ $items[0].json.response || $items[0].json.answer || $items[0].json.message?.content || 'No answer from LLM' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Set Final Answer",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1.1,
+      "position": [
+        1350,
+        300
+      ],
+      "id": "set-final-answer"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger (User Query)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (Ollama Embeddings for Query - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (Ollama Embeddings for Query - Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Execute Command (Search FAISS - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Command (Search FAISS - Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Function (Format Context - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function (Format Context - Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (LLM for Q&A - Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (LLM for Q&A - Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Set Final Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "rag-retriever"
+}

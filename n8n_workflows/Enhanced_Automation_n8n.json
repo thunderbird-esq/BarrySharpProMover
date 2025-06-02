@@ -1,0 +1,278 @@
+{
+  "name": "Enhanced Automation Workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": "0 */6 * * *"
+      },
+      "name": "Scheduled Report Trigger",
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        100,
+        100
+      ],
+      "id": "cron-report-trigger"
+    },
+    {
+      "parameters": {
+        "path": "webhook/trigger-ci",
+        "options": {}
+      },
+      "name": "Webhook CI Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ],
+      "webhookId": "webhook-ci-trigger-id",
+      "id": "webhook-ci-trigger"
+    },
+    {
+      "parameters": {
+        "path": "assets/",
+        "events": [
+          "create",
+          "update",
+          "delete"
+        ],
+        "options": {
+          "recursive": true,
+          "ignoreDotFiles": true
+        }
+      },
+      "name": "Asset Change Trigger",
+      "type": "n8n-nodes-base.fileSystemTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        500
+      ],
+      "id": "asset-change-trigger",
+      "notes": "Actual configuration in n8n UI for file system events is more detailed. This is a conceptual placeholder."
+    },
+    {
+      "parameters": {
+        "functionCode": "// Placeholder: Determine action based on trigger\n// n8n provides $triggerNode (name of trigger) and $input.item (data from trigger)\nlet trigger_type = 'unknown';\nlet data = $input.item;\n\nif ($triggerNode === 'Scheduled Report Trigger') {\n  trigger_type = 'scheduled_report';\n} else if ($triggerNode === 'Webhook CI Trigger') {\n  trigger_type = data.json.body?.trigger_event || 'webhook_ci'; // Example: expect trigger_event in webhook body\n} else if ($triggerNode === 'Asset Change Trigger') {\n  trigger_type = 'asset_change';\n  data.json.file_path = data.json.path; // Standardize file_path for downstream\n}\n\nconsole.log(`Trigger detected: ${$triggerNode}, Parsed type: ${trigger_type}, Data: ${JSON.stringify(data.json)}`);\nreturn [{ json: { trigger_source: $triggerNode, trigger_type: trigger_type, ...data.json } }];"
+      },
+      "name": "Parse Input/Trigger Type (Placeholder)",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        400,
+        300
+      ],
+      "id": "parse-trigger-type"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {},
+          "rules": [
+            {
+              "value1": "{{ $json.trigger_type }}",
+              "operation": "includes",
+              "value2": "ci"
+            },
+            {
+              "value1": "{{ $json.trigger_type }}",
+              "operation": "includes",
+              "value2": "report"
+            },
+            {
+              "value1": "{{ $json.trigger_type }}",
+              "operation": "includes",
+              "value2": "change"
+            }
+          ]
+        }
+      },
+      "name": "Route Automation Task",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 1,
+      "position": [
+        650,
+        300
+      ],
+      "id": "route-automation-task"
+    },
+    {
+      "parameters": {
+        "command": "python tools/ci_cd_pipeline.py --trigger {{ $json.trigger_type }}",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Run CI/CD Pipeline",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        900,
+        100
+      ],
+      "id": "run-ci-cd-pipeline"
+    },
+    {
+      "parameters": {
+        "command": "python tools/notifier.py --message \"CI Pipeline completed for trigger: {{ $json.trigger_type }}\"",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Log CI Pipeline Event",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        100
+      ],
+      "id": "log-ci-pipeline-event"
+    },
+    {
+      "parameters": {
+        "command": "python tools/report_gen.py --output_path docs/status_reports/status_{{ $now.toFormat(\"yyyyMMddHHmmss\") }}.md",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Generate Status Report",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ],
+      "id": "generate-status-report"
+    },
+    {
+      "parameters": {
+        "command": "sh tools/notify_cli.sh \"Status report generated.\"",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Notify Report Generation",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        1150,
+        300
+      ],
+      "id": "notify-report-generation"
+    },
+    {
+      "parameters": {
+        "command": "echo \"File change detected by n8n trigger: {{ $json.file_path }} event: {{ $json.event }}\"",
+        "options": {
+          "cwd": "/app"
+        }
+      },
+      "name": "Handle File Change (Placeholder)",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        900,
+        500
+      ],
+      "id": "handle-file-change",
+      "notes": "This branch would contain logic from enhanced_file_watcher.py if not fully covered by the CI/CD pipeline trigger. For now, a simple echo."
+    }
+  ],
+  "connections": {
+    "Scheduled Report Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input/Trigger Type (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook CI Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input/Trigger Type (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asset Change Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Input/Trigger Type (Placeholder)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Input/Trigger Type (Placeholder)": {
+      "main": [
+        [
+          {
+            "node": "Route Automation Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Automation Task": {
+      "main": [
+        [
+          {
+            "node": "Run CI/CD Pipeline",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generate Status Report",
+            "type": "main",
+            "index": 1
+          }
+        ],
+        [
+          {
+            "node": "Handle File Change (Placeholder)",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Run CI/CD Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Log CI Pipeline Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Status Report": {
+      "main": [
+        [
+          {
+            "node": "Notify Report Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "id": "enhanced-automation-workflow"
+}

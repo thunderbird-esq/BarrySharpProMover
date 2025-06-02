@@ -1,6 +1,6 @@
 # Barry Sharp Pro Mover - GB Studio Game Project
 
-A Game Boy game developed using GB Studio with integrated LangFlow automation and build tools.
+A Game Boy game developed using GB Studio with integrated n8n automation and build tools.
 
 ## Project Structure
 
@@ -14,8 +14,8 @@ A Game Boy game developed using GB Studio with integrated LangFlow automation an
 - `scripts/` - Development and validation scripts
   - `build/` - Build-related scripts
   - `validation/` - Asset validation tools
-- `langflow_components/` - Custom LangFlow components for automation
-- `langflow_projects/` - LangFlow workflow definitions
+- `tools/` - Utility scripts for automation and project management.
+- `n8n_workflows/` - n8n workflow definitions.
 
 ### Documentation
 - `docs/` - Project documentation organized by category
@@ -27,7 +27,7 @@ A Game Boy game developed using GB Studio with integrated LangFlow automation an
 - `memory/` - Project state and approval tracking
 - `feedback/` - User feedback and testing results
 - `staging/` - Temporary staging area for outputs
-- `vectorstore/` - Knowledge base storage
+- `vectorstore/` - Knowledge base storage for RAG.
 
 ## Quick Start
 
@@ -56,14 +56,21 @@ make clean
 ./scripts/snapshot.sh
 ```
 
-### LangFlow Integration
-```bash
-# Start LangFlow server
-./start_langflow.sh
+## Project Automation with n8n
 
-# Bootstrap project management
-./bootstrap_pm_backbone.sh
-```
+This project utilizes n8n for various automation tasks, including CI/CD, build management, task processing, and AI-assisted development.
+
+### Prerequisites
+List n8n version, Node.js, Python, Ollama, gb-studio-cli, etc.
+
+### Setup
+Explain how to import workflows from `n8n_workflows/` into n8n. Detail environment variable setup for API keys like Google Gemini, Ollama URL if not default.
+
+### Running Key Workflows
+Instructions for `TheConductor_PM_n8n`, `Build_Workflow_n8n`, `Enhanced_Automation_n8n`.
+
+### Architecture Overview
+Briefly describe the n8n-based architecture, including key workflows and how they use scripts from `tools/` and state from `memory/`.
 
 ## Asset Organization
 
@@ -84,14 +91,16 @@ The project uses a Makefile that leverages the GB Studio CLI for consistent buil
 - Web build generation
 - Asset validation
 - Clean build management
+Some of these Makefile targets may also be invoked via n8n workflows.
 
 ## Requirements
 
 - GB Studio (with CLI tools)
-- Node.js (for GB Studio CLI)
-- Python 3.x (for validation scripts)
-- LangFlow (for automation workflows)
+- Node.js (for GB Studio CLI and n8n)
+- Python 3.x (for utility and automation scripts)
+- n8n (for workflow automation)
+- Ollama (for local LLM operations, if used)
 
 ## Contributing
 
-Refer to the documentation in `docs/` for development guidelines and project specifications.
+Refer to the documentation in `docs/` (including `docs/N8N_WORKFLOW_GUIDE.md`) for development guidelines and project specifications.

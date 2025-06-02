@@ -1,0 +1,164 @@
+# Enhanced Makefile with Automation Integration
+# Barry Sharp Pro Mover - CI/CD and Automation Targets
+
+# Include the original Makefile
+include Makefile
+
+# Automation-specific variables
+AUTOMATION_SCRIPT := scripts/automation_control.sh
+COMPONENTS_DIR := langflow_components
+MEMORY_DIR := memory
+REPORTS_DIR := docs
+
+# Automation targets
+.PHONY: automation-start automation-stop automation-restart automation-status
+.PHONY: automation-pipeline automation-report automation-logs automation-install
+.PHONY: automation-test automation-clean automation-help
+
+# Start the automation system
+automation-start:
+	@echo "🚀 Starting Barry Sharp Pro Mover automation system..."
+	@$(AUTOMATION_SCRIPT) start
+
+# Stop the automation system
+automation-stop:
+	@echo "🛑 Stopping automation system..."
+	@$(AUTOMATION_SCRIPT) stop
+
+# Restart the automation system
+automation-restart:
+	@echo "🔄 Restarting automation system..."
+	@$(AUTOMATION_SCRIPT) restart
+
+# Check automation status
+automation-status:
+	@$(AUTOMATION_SCRIPT) status
+
+# Manually trigger CI/CD pipeline
+automation-pipeline:
+	@echo "⚙️  Triggering CI/CD pipeline..."
+	@$(AUTOMATION_SCRIPT) pipeline
+
+# Generate status report
+automation-report:
+	@echo "📊 Generating status report..."
+	@python3 langflow_components/report_gen.py
+	@echo ""
+	@echo "=== Report Preview ==="
+	@head -20 docs/status_report_$(shell date +%Y%m%d).md | sed 's/^/  /'
+
+automation-trigger:
+	@echo "🚀 Triggering CI/CD pipeline..."
+	@python3 -c "from langflow_components.ci_cd_pipeline import CICDPipeline; pipeline = CICDPipeline(); result = pipeline.build(); print('✅ CI/CD pipeline completed'); print(result)"
+
+# Show automation logs
+automation-logs:
+	@$(AUTOMATION_SCRIPT) logs
+
+# Install automation components
+automation-install:
+	@echo "📦 Installing automation components..."
+	@mkdir -p $(MEMORY_DIR)
+	@mkdir -p $(REPORTS_DIR)/shared
+	@echo '{"queue": []}' > $(MEMORY_DIR)/approval_queue.json
+	@touch $(MEMORY_DIR)/pm_ledger.jsonl
+	@echo '{"history": []}' > $(MEMORY_DIR)/project_mem.json
+	@echo "✅ Automation components installed"
+
+# Test automation components
+automation-test:
+	@echo "🧪 Testing automation components..."
+	@python3 -c "import sys; sys.path.append('$(COMPONENTS_DIR)'); from ci_cd_pipeline import CICDPipeline; print('✅ CI/CD Pipeline component OK')"
+	@python3 -c "import sys; sys.path.append('$(COMPONENTS_DIR)'); from enhanced_file_watcher import EnhancedFileWatcher; print('✅ Enhanced File Watcher component OK')"
+	@python3 -c "import sys; sys.path.append('$(COMPONENTS_DIR)'); from gbstudio_build import GBStudioBuild; print('✅ GB Studio Build component OK')"
+	@echo "✅ All automation components tested successfully"
+
+# Clean automation artifacts
+automation-clean:
+	@echo "🧹 Cleaning automation artifacts..."
+	@rm -f $(MEMORY_DIR)/automation.pid
+	@rm -f $(MEMORY_DIR)/watcher.pid
+	@rm -f $(MEMORY_DIR)/automation.log
+	@echo "✅ Automation artifacts cleaned"
+
+# Show automation help
+automation-help:
+	@echo "Barry Sharp Pro Mover - Automation Targets"
+	@echo ""
+	@echo "Available automation targets:"
+	@echo "  automation-start     - Start the automation system"
+	@echo "  automation-stop      - Stop the automation system"
+	@echo "  automation-restart   - Restart the automation system"
+	@echo "  automation-status    - Check automation status"
+	@echo "  automation-pipeline  - Manually trigger CI/CD pipeline"
+	@echo "  automation-report    - Generate status report"
+	@echo "  automation-logs      - Show automation logs"
+	@echo "  automation-install   - Install automation components"
+	@echo "  automation-test      - Test automation components"
+	@echo "  automation-clean     - Clean automation artifacts"
+	@echo "  automation-help      - Show this help"
+	@echo ""
+	@echo "Enhanced build targets:"
+	@echo "  build-with-automation - Build with full automation pipeline"
+	@echo "  deploy-staging       - Deploy to staging with automation"
+	@echo "  full-pipeline        - Run complete CI/CD pipeline"
+	@echo ""
+	@echo "Original build targets are still available:"
+	@echo "  build-rom, build-web, build-and-test, etc."
+
+# Enhanced build targets that integrate with automation
+build-with-automation: automation-install
+	@echo "🔧 Building with automation pipeline..."
+	@$(AUTOMATION_SCRIPT) pipeline
+
+# Deploy to staging
+deploy-staging: build-rom
+	@echo "🚀 Deploying to staging..."
+	@mkdir -p staging
+	@cp build/rom.gb staging/barry_sharp_$(shell date +%Y%m%d_%H%M%S).gb
+	@echo "✅ Deployed to staging directory"
+
+# Full pipeline with all stages
+full-pipeline: automation-install
+	@echo "🎯 Running full CI/CD pipeline..."
+	@$(MAKE) check-bg check-scenes check-json
+	@$(MAKE) build-and-test
+	@$(MAKE) deploy-staging
+	@$(MAKE) automation-report
+	@echo "✅ Full pipeline completed successfully"
+
+# Development workflow targets
+dev-start: automation-install automation-start
+	@echo "🎮 Development environment started"
+	@echo "   - Automation system: Running"
+	@echo "   - File watcher: Active"
+	@echo "   - LangFlow UI: http://127.0.0.1:7860"
+	@echo "   - Ready for development!"
+
+dev-stop: automation-stop
+	@echo "🎮 Development environment stopped"
+
+# Quick development build
+dev-build:
+	@echo "⚡ Quick development build..."
+	@$(MAKE) build-and-test
+	@echo "✅ Development build complete"
+
+# Watch mode for development
+dev-watch: automation-start
+	@echo "👀 Watching for file changes..."
+	@echo "   Press Ctrl+C to stop watching"
+	@while true; do sleep 1; done
+
+# Production release
+release: full-pipeline
+	@echo "🎉 Creating production release..."
+	@mkdir -p releases
+	@cp build/rom.gb releases/barry_sharp_v$(shell date +%Y%m%d_%H%M%S).gb
+	@$(MAKE) automation-report
+	@echo "✅ Production release created"
+
+# Update automation help in main help
+help: automation-help
+	@echo ""
+	@echo "Run 'make automation-help' for automation-specific targets"

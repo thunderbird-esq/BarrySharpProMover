@@ -1,0 +1,308 @@
+{
+  "flow_id": "enhanced_automation_barry_sharp",
+  "flow_name": "Enhanced Automation Pipeline",
+  "description": "Advanced CI/CD and file monitoring workflow for Barry Sharp Pro Mover",
+  "version": "2.0.0",
+  "nodes": [
+    {
+      "id": "user_input",
+      "type": "TextInput",
+      "name": "Command Input",
+      "description": "Accepts user commands: 'start-watch', 'run-pipeline', 'stop-watch', 'status'",
+      "position": {"x": 100, "y": 100},
+      "data": {
+        "template": {
+          "text": "start-watch"
+        }
+      }
+    },
+    {
+      "id": "command_parser",
+      "type": "LLMChain",
+      "name": "Command Parser",
+      "description": "Parses user commands and routes to appropriate automation components",
+      "position": {"x": 300, "y": 100},
+      "data": {
+        "template": {
+          "prompt": "Parse the following command and determine the action: {text}\n\nAvailable actions:\n- start-watch: Start file monitoring\n- run-pipeline: Execute CI/CD pipeline\n- stop-watch: Stop file monitoring\n- status: Get system status\n- build-only: Build ROM without testing\n- full-pipeline: Run complete CI/CD with all stages\n\nReturn JSON with 'action' and 'parameters' fields."
+        }
+      }
+    },
+    {
+      "id": "enhanced_file_watcher",
+      "type": "PythonNode",
+      "name": "Enhanced File Watcher",
+      "description": "Advanced file monitoring with automatic CI/CD triggering",
+      "position": {"x": 500, "y": 50},
+      "data": {
+        "script_path": "langflow_components/enhanced_file_watcher.py",
+        "class_name": "EnhancedFileWatcher",
+        "method": "build",
+        "args": {
+          "watch_directories": [
+            "assets/sprites/",
+            "assets/backgrounds/",
+            "assets/music/",
+            "assets/sounds/",
+            "scripts/",
+            "docs/",
+            "BARRY-SHARP-PRO-MOVER-1.gbsproj"
+          ],
+          "ignore_patterns": [
+            "*.tmp",
+            "*.bak",
+            "*~",
+            ".DS_Store",
+            "*.swp",
+            "*.swo",
+            "build/*",
+            "memory/*",
+            ".git/*"
+          ],
+          "auto_trigger_pipeline": true,
+          "debounce_seconds": 5,
+          "watch_duration": 0
+        }
+      }
+    },
+    {
+      "id": "ci_cd_pipeline",
+      "type": "PythonNode",
+      "name": "CI/CD Pipeline",
+      "description": "Automated build, test, and deployment pipeline",
+      "position": {"x": 500, "y": 200},
+      "data": {
+        "script_path": "langflow_components/ci_cd_pipeline.py",
+        "class_name": "CICDPipeline",
+        "method": "build",
+        "args": {
+          "trigger_event": "manual",
+          "run_validation": true,
+          "auto_test": true,
+          "deploy_target": "local",
+          "notify_on_completion": true
+        }
+      }
+    },
+    {
+      "id": "gb_studio_build",
+      "type": "PythonNode",
+      "name": "GB Studio Build",
+      "description": "Direct GB Studio compilation component",
+      "position": {"x": 500, "y": 350},
+      "data": {
+        "script_path": "langflow_components/gbstudio_build.py",
+        "class_name": "GBStudioBuild",
+        "method": "build",
+        "args": {
+          "project_dir": ".",
+          "cli_path": "gbstudio-cli",
+          "open_emulator": true,
+          "target": "rom"
+        }
+      }
+    },
+    {
+      "id": "approval_queue_manager",
+      "type": "FileReaderWriter",
+      "name": "Approval Queue",
+      "description": "Manages pending approvals and task queue",
+      "position": {"x": 700, "y": 100},
+      "data": {
+        "file_path": "memory/approval_queue.json",
+        "mode": "rw",
+        "auto_create": true
+      }
+    },
+    {
+      "id": "project_ledger",
+      "type": "FileWriter",
+      "name": "Project Ledger",
+      "description": "Append-only event log for all automation activities",
+      "position": {"x": 700, "y": 200},
+      "data": {
+        "file_path": "memory/pm_ledger.jsonl",
+        "mode": "a",
+        "format": "jsonl"
+      }
+    },
+    {
+      "id": "enhanced_report_gen",
+      "type": "PythonNode",
+      "name": "Enhanced Report Generator",
+      "description": "Generates comprehensive status reports with automation metrics",
+      "position": {"x": 700, "y": 300},
+      "data": {
+        "script_path": "langflow_components/report_gen.py",
+        "method": "generate_report",
+        "args": {
+          "include_automation_stats": true,
+          "include_build_history": true,
+          "include_file_changes": true
+        }
+      }
+    },
+    {
+      "id": "notification_hub",
+      "type": "PythonNode",
+      "name": "Notification Hub",
+      "description": "Centralized notification system for all automation events",
+      "position": {"x": 900, "y": 150},
+      "data": {
+        "script_path": "langflow_components/notifier.py",
+        "method": "notify",
+        "args": {
+          "method": "cli",
+          "include_timestamp": true,
+          "include_context": true
+        }
+      }
+    },
+    {
+      "id": "system_status",
+      "type": "SystemMonitor",
+      "name": "System Status",
+      "description": "Monitors system resources and automation health",
+      "position": {"x": 900, "y": 250},
+      "data": {
+        "monitor_items": [
+          "file_watcher_status",
+          "pipeline_queue_length",
+          "last_successful_build",
+          "disk_space",
+          "memory_usage"
+        ]
+      }
+    },
+    {
+      "id": "output_formatter",
+      "type": "TextOutput",
+      "name": "Response Formatter",
+      "description": "Formats and presents automation results to user",
+      "position": {"x": 1100, "y": 200},
+      "data": {
+        "template": {
+          "format": "markdown",
+          "include_timestamp": true,
+          "include_summary": true
+        }
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "user_input",
+      "target": "command_parser",
+      "data": {"output_key": "text", "input_key": "text"}
+    },
+    {
+      "source": "command_parser",
+      "target": "enhanced_file_watcher",
+      "data": {"condition": "action == 'start-watch'"}
+    },
+    {
+      "source": "command_parser",
+      "target": "ci_cd_pipeline",
+      "data": {"condition": "action in ['run-pipeline', 'full-pipeline']"}
+    },
+    {
+      "source": "command_parser",
+      "target": "gb_studio_build",
+      "data": {"condition": "action == 'build-only'"}
+    },
+    {
+      "source": "command_parser",
+      "target": "system_status",
+      "data": {"condition": "action == 'status'"}
+    },
+    {
+      "source": "enhanced_file_watcher",
+      "target": "approval_queue_manager",
+      "data": {"output_key": "changes", "input_key": "new_items"}
+    },
+    {
+      "source": "ci_cd_pipeline",
+      "target": "project_ledger",
+      "data": {"output_key": "results", "input_key": "log_entry"}
+    },
+    {
+      "source": "gb_studio_build",
+      "target": "project_ledger",
+      "data": {"output_key": "build_result", "input_key": "log_entry"}
+    },
+    {
+      "source": "approval_queue_manager",
+      "target": "enhanced_report_gen",
+      "data": {"output_key": "queue_data", "input_key": "queue_input"}
+    },
+    {
+      "source": "project_ledger",
+      "target": "enhanced_report_gen",
+      "data": {"output_key": "ledger_data", "input_key": "ledger_input"}
+    },
+    {
+      "source": "ci_cd_pipeline",
+      "target": "notification_hub",
+      "data": {"output_key": "status", "input_key": "message"}
+    },
+    {
+      "source": "enhanced_file_watcher",
+      "target": "notification_hub",
+      "data": {"output_key": "change_summary", "input_key": "message"}
+    },
+    {
+      "source": "enhanced_report_gen",
+      "target": "output_formatter",
+      "data": {"output_key": "report", "input_key": "content"}
+    },
+    {
+      "source": "system_status",
+      "target": "output_formatter",
+      "data": {"output_key": "status_report", "input_key": "content"}
+    },
+    {
+      "source": "notification_hub",
+      "target": "output_formatter",
+      "data": {"output_key": "notification_log", "input_key": "notifications"}
+    }
+  ],
+  "settings": {
+    "auto_save": true,
+    "error_handling": "continue",
+    "logging_level": "info",
+    "max_concurrent_nodes": 5,
+    "timeout_seconds": 300,
+    "retry_failed_nodes": true,
+    "max_retries": 3
+  },
+  "triggers": [
+    {
+      "type": "file_change",
+      "source": "enhanced_file_watcher",
+      "target": "ci_cd_pipeline",
+      "conditions": {
+        "file_types": [".gbsproj", ".png", ".mod", ".py"],
+        "directories": ["assets/", "scripts/"]
+      }
+    },
+    {
+      "type": "schedule",
+      "cron": "0 */6 * * *",
+      "target": "enhanced_report_gen",
+      "description": "Generate status report every 6 hours"
+    },
+    {
+      "type": "webhook",
+      "endpoint": "/api/trigger-build",
+      "target": "ci_cd_pipeline",
+      "auth_required": false
+    }
+  ],
+  "metadata": {
+    "created_at": "2024-01-20T00:00:00Z",
+    "created_by": "automation_enhancement",
+    "project": "barry-sharp-pro-mover",
+    "tags": ["ci-cd", "automation", "game-development", "gb-studio"],
+    "documentation": "Enhanced automation workflow with file monitoring, CI/CD pipeline, and comprehensive reporting"
+  }
+}

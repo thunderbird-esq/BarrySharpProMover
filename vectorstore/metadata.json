@@ -1,0 +1,33 @@
+{
+  "build_time": "2025-06-02 00:04:59",
+  "categories": {
+    "design_kb": {
+      "success": true,
+      "time": "2.20 seconds"
+    },
+    "art_kb": {
+      "success": false,
+      "time": "0.00 seconds"
+    },
+    "code_kb": {
+      "success": false,
+      "time": "0.00 seconds"
+    },
+    "dialogue_kb": {
+      "success": false,
+      "time": "0.00 seconds"
+    },
+    "music_kb": {
+      "success": false,
+      "time": "0.00 seconds"
+    },
+    "shared_kb": {
+      "success": true,
+      "time": "0.04 seconds"
+    },
+    "qa_kb": {
+      "success": true,
+      "time": "2.12 seconds"
+    }
+  }
+}

@@ -1,0 +1,192 @@
+{
+  "flow_name": "The Conductor PM",
+  "nodes": [
+    {
+      "id": "user_input",
+      "type": "Input",
+      "name": "User Command",
+      "description": "Accepts commands, tasks, or status queries from the user."
+    },
+    {
+      "id": "agent_registry",
+      "type": "FileReader",
+      "name": "Agent Registry",
+      "file_path": "langflow_agents/registry.json",
+      "_comment": "Loads agent config and routing info."
+    },
+    {
+      "id": "task_parser",
+      "type": "LLMChain",
+      "name": "Task Parser",
+      "description": "Analyzes input, determines if it's a task, approval, or query. Extracts target agent/task details."
+    },
+    {
+      "id": "task_router",
+      "type": "Router",
+      "name": "Task Router",
+      "description": "Routes tasks to the appropriate agent based on registry and parsed command."
+    },
+    {
+      "id": "approval_queue",
+      "type": "FileReaderWriter",
+      "name": "Approval Queue",
+      "file_path": "memory/approval_queue.json",
+      "mode": "rw",
+      "_comment": "Tracks all pending and completed approvals."
+    },
+    {
+      "id": "ledger_logger",
+      "type": "FileWriter",
+      "name": "Ledger Logger",
+      "file_path": "memory/pm_ledger.jsonl",
+      "mode": "a",
+      "_comment": "Append-only event log, one JSON object per line."
+    },
+    {
+      "id": "file_watcher",
+      "type": "PythonNode",
+      "name": "File Watcher",
+      "script_path": "langflow_components/file_watcher.py",
+      "args": {
+        "watch_dirs": [
+          "assets/sprites/",
+          "assets/dialogue/",
+          "assets/music/",
+          "scripts/",
+          "docs/"
+        ],
+        "callback": "approval_queue"
+      },
+      "_comment": "Monitors asset and script directories for new/updated files, triggers approval pipeline."
+    },
+    {
+      "id": "per_agent_kb",
+      "type": "DynamicMemory",
+      "name": "Per-Agent KBs",
+      "files": [
+        "vectorstore/art_kb",
+        "vectorstore/dialogue_kb",
+        "vectorstore/music_kb",
+        "vectorstore/code_kb",
+        "vectorstore/qa_kb",
+        "vectorstore/shared_kb"
+      ],
+      "mode": "rw",
+      "_comment": "Memory/context for each agent, dynamically queried as needed."
+    },
+    {
+      "id": "report_gen",
+      "type": "PythonNode",
+      "name": "Report Generator",
+      "script_path": "langflow_components/report_gen.py",
+      "args": {
+        "ledger_path": "memory/pm_ledger.jsonl",
+        "queue_path": "memory/approval_queue.json",
+        "output_path": "docs/status_report_{{today}}.md"
+      },
+      "_comment": "Generates Markdown status reports from the ledger and approval queue."
+    },
+    {
+      "id": "api_notifier",
+      "type": "PythonNode",
+      "name": "API Notifier",
+      "script_path": "langflow_components/notifier.py",
+      "args": {
+        "notify_type": "cli",
+        "notify_script": "scripts/notify_cli.sh"
+      },
+      "_comment": "Sends notifications (default: CLI, can be swapped for webhook/email)."
+    },
+    {
+      "id": "snapshotter",
+      "type": "PythonNode",
+      "name": "Snapshotter",
+      "script_path": "scripts/snapshot.sh",
+      "args": {
+        "reason": "{{event}}"
+      },
+      "_comment": "Triggers a version snapshot after major task completions or approvals."
+    },
+    {
+      "id": "chain_logic",
+      "type": "Router",
+      "name": "Chain Logic",
+      "description": "Manages multi-step workflow routing (Art → Code → QA → Approval, etc.)"
+    },
+    {
+      "id": "pm_state_memory",
+      "type": "FileReaderWriter",
+      "name": "PM State Memory",
+      "file_path": "memory/project_mem.json",
+      "mode": "rw"
+    }
+  ],
+  "edges": [
+    {
+      "from": "user_input",
+      "to": "task_parser"
+    },
+    {
+      "from": "task_parser",
+      "to": "agent_registry"
+    },
+    {
+      "from": "task_parser",
+      "to": "task_router"
+    },
+    {
+      "from": "task_router",
+      "to": "approval_queue"
+    },
+    {
+      "from": "task_router",
+      "to": "ledger_logger"
+    },
+    {
+      "from": "approval_queue",
+      "to": "ledger_logger"
+    },
+    {
+      "from": "approval_queue",
+      "to": "api_notifier"
+    },
+    {
+      "from": "approval_queue",
+      "to": "chain_logic"
+    },
+    {
+      "from": "chain_logic",
+      "to": "approval_queue"
+    },
+    {
+      "from": "file_watcher",
+      "to": "approval_queue"
+    },
+    {
+      "from": "chain_logic",
+      "to": "ledger_logger"
+    },
+    {
+      "from": "chain_logic",
+      "to": "api_notifier"
+    },
+    {
+      "from": "chain_logic",
+      "to": "snapshotter"
+    },
+    {
+      "from": "pm_state_memory",
+      "to": "task_parser"
+    },
+    {
+      "from": "per_agent_kb",
+      "to": "task_parser"
+    },
+    {
+      "from": "report_gen",
+      "to": "api_notifier"
+    }
+  ],
+  "_comment": "This flow expects custom scripts in langflow_components/. Copy/adapt file_watcher.py, report_gen.py, and notifier.py per your logic. Approval queue, registry, and ledger match your backbone. Multi-step workflow is routed via chain_logic and approval_queue. PM State Memory provides context for full audit/recovery. Notification and snapshotting are CLI by default—swap scripts for other integrations. For detailed schema, see node comments above."
+}
+

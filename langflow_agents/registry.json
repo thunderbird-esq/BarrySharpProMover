@@ -1,0 +1,23 @@
+{
+  "agents": [
+    {
+      "name": "SpriteArtist",
+      "type": "art",
+      "description": "Handles all sprite and visual asset creation.",
+      "memory_file": "../vectorstore/art_kb",
+      "input_folder": "../assets/sprites/",
+      "output_folder": "../assets/sprites/",
+      "enabled": true
+    },
+    {
+      "name": "DialogueWriter",
+      "type": "dialogue",
+      "description": "Creates and reviews dialogue scripts.",
+      "memory_file": "../vectorstore/dialogue_kb",
+      "input_folder": "../assets/dialogue/",
+      "output_folder": "../assets/dialogue/",
+      "enabled": true
+    }
+  ]
+}
+

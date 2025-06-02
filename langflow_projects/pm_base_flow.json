@@ -1,0 +1,57 @@
+{
+  "id": "0bbde2ec-6d14-4f5c-a13b-4166d3e8fdad",
+  "name": "Project Manager Base",
+  "description": "Base scaffold for The Conductor PM. Add agent, queue, and logging nodes here.",
+  "data": {
+    "nodes": [
+      {
+        "id": "9ee44d7d-bfde-4c6b-a74c-95a1fa6328e4",
+        "type": "Input",
+        "data": {
+          "template": {
+            "text": ""
+          }
+        },
+        "position": {
+          "x": 100,
+          "y": 200
+        }
+      },
+      {
+        "id": "ce4f90c0-c404-4d97-bba0-6de39436ad6a",
+        "type": "LLMChain",
+        "data": {
+          "template": {
+            "prompt": "You are the Project Manager for the Barry Sharp Pro Mover project. Route incoming requests to the appropriate team or queue them for review."
+          }
+        },
+        "position": {
+          "x": 400,
+          "y": 200
+        }
+      },
+      {
+        "id": "37edeb37-c265-42ed-94e7-8b4ac9c0be74",
+        "type": "Output",
+        "data": {
+          "template": {}
+        },
+        "position": {
+          "x": 700,
+          "y": 200
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "9ee44d7d-bfde-4c6b-a74c-95a1fa6328e4",
+        "target": "ce4f90c0-c404-4d97-bba0-6de39436ad6a"
+      },
+      {
+        "source": "ce4f90c0-c404-4d97-bba0-6de39436ad6a",
+        "target": "37edeb37-c265-42ed-94e7-8b4ac9c0be74"
+      }
+    ]
+  }
+}
+

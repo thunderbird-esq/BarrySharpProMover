@@ -1,0 +1,13 @@
+{
+  "type": "mechanic_design",
+  "target": "powerups_module",
+  "content": {
+    "name": "Power Puller",
+    "description": "Pulls metal crates from 1 tile away with charge-up."
+  },
+  "meta": {
+    "source": "Design Department",
+    "timestamp": "2025-05-30T22:14Z"
+  }
+}
+

@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: barrysharp-components
+Version: 0.1.0
+Summary: Custom LangFlow components for Barry Sharp project
+Requires-Dist: langflow>=1.4

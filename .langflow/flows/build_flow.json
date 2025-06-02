@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "trigger",
+      "class": "TextInput",
+      "name": "Trigger",
+      "prompt": "e.g. build rom"
+    },
+    {
+      "id": "update",
+      "class": "ShellCommand",
+      "name": "Git Pull",
+      "cmd": "git -C /path/to/BarrySharp pull --ff-only",
+      "stream": false
+    },
+    {
+      "id": "prep",
+      "class": "ShellCommand",
+      "name": "Sync gbsres",
+      "cmd": "./sync_gbsres.sh",
+      "cwd": "/path/to/BarrySharp",
+      "stream": true
+    },
+    {
+      "id": "build",
+      "class": "ShellCommand",
+      "name": "Build ROM",
+      "cmd": "gb-studio-cli make:rom ./BARRY-SHARP-PRO-MOVER-1.gbsproj ./builds/BarrySharp-$(date +%Y%m%d_%H%M%S).gb",
+      "cwd": "/path/to/BarrySharp",
+      "stream": true
+    },
+    {
+      "id": "report",
+      "class": "ShellCommand",
+      "name": "OpenEmu Launch",
+      "cmd": "open -a OpenEmu $(ls -t builds/BarrySharp-*.gb | head -1)",
+      "cwd": "/path/to/BarrySharp",
+      "stream": false
+    }
+  ],
+  "links": [
+    ["trigger", "update", "text"],
+    ["update", "prep"],
+    ["prep", "build"],
+    ["build", "report"]
+  ]
+}
+

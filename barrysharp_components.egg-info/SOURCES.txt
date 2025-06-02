@@ -1,0 +1,8 @@
+pyproject.toml
+barrysharp_components.egg-info/PKG-INFO
+barrysharp_components.egg-info/SOURCES.txt
+barrysharp_components.egg-info/dependency_links.txt
+barrysharp_components.egg-info/entry_points.txt
+barrysharp_components.egg-info/requires.txt
+barrysharp_components.egg-info/top_level.txt
+langflow_components/gbstudio_build.py

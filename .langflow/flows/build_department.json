@@ -1,0 +1,40 @@
+{
+  "id": "build_department_flow",
+  "version": "1.4.2",
+  "nodes": [
+    {
+      "id": "1",
+      "type": "TextInput",
+      "name": "Trigger",
+      "data": {
+        "text": "Start Build"
+      }
+    },
+    {
+      "id": "2",
+      "type": "Subprocess",
+      "name": "Run Make Build",
+      "data": {
+        "command": "make build-rom && make build-web && make hash-rom"
+      }
+    },
+    {
+      "id": "3",
+      "type": "TextOutput",
+      "name": "Build Summary",
+      "data": {
+        "output_variable": "summary"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "1",
+      "target": "2"
+    },
+    {
+      "source": "2",
+      "target": "3"
+    }
+  ]
+}

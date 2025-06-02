@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "barrysharp-components"
+version = "0.1.0"
+description = "Custom LangFlow components for Barry Sharp project"
+dependencies = ["langflow>=1.4"]
+
+[tool.setuptools]
+packages = ["langflow_components"]      # <-- ONLY expose this package
+
+[project.entry-points."langflow_components"]
+gbstudio-build = "langflow_components.tools.gbstudio_build:GBStudioBuild"
+

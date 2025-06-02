@@ -11,11 +11,13 @@ A Game Boy game developed using GB Studio with integrated LangFlow automation an
 
 ### Development Tools
 - `Makefile` - Build automation using GB Studio CLI
-- `scripts/` - Development and validation scripts
+- `scripts/` - Development, validation, and utility scripts. See `scripts/README.md` for detailed descriptions of key scripts.
   - `build/` - Build-related scripts
   - `validation/` - Asset validation tools
-- `langflow_components/` - Custom LangFlow components for automation
-- `langflow_projects/` - LangFlow workflow definitions
+- `langflow_components/` - Source code for the installable Python package containing custom LangFlow components specific to this project (see `pyproject.toml`).
+- `.langflow/` - A directory that LangFlow may use locally for storing component registration information or other user-specific data. Project-specific, version-controlled flows are typically stored in `langflow_projects/`.
+- `langflow_projects/` - Contains exported LangFlow workflow definitions (JSON format).
+- `langflow/` - This subdirectory contains a full source code distribution of the LangFlow application itself. It is included primarily for reference or for developers who might want to engage in LangFlow development. **This project's automation system relies on LangFlow being installed as a package within the Python virtual environment (`venv/`), not on running LangFlow directly from this subdirectory.** For a more detailed explanation, please see the "Understanding the `langflow/` Subdirectory" section in `docs/AUTOMATION_GUIDE.md`.
 
 ### Documentation
 - `docs/` - Project documentation organized by category

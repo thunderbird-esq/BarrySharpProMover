@@ -1,0 +1,2 @@
+[langflow_components]
+gbstudio-build = custom_components.tools.gbstudio_build:GBStudioBuild

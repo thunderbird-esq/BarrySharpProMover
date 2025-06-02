@@ -1,0 +1,8 @@
+[project]
+name = "barrysharp-components"
+version = "0.1.0"
+dependencies = ["langflow>=1.4"]
+
+[project.entry-points."langflow_components"]
+gbstudio-build = "custom_components.tools.gbstudio_build:GBStudioBuild"
+

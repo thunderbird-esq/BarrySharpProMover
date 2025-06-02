@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: barrysharp-components
+Version: 0.1.0
+License-File: LICENSE
+Requires-Dist: langflow>=1.4
+Dynamic: license-file

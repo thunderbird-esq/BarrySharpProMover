@@ -1,0 +1,40 @@
+{
+  "components": [
+    {
+      "name": "CICDPipeline",
+      "file": "ci_cd_pipeline.py",
+      "description": "CI/CD pipeline automation component",
+      "enabled": true
+    },
+    {
+      "name": "EnhancedFileWatcher",
+      "file": "enhanced_file_watcher.py",
+      "description": "Enhanced file system monitoring component",
+      "enabled": true
+    },
+    {
+      "name": "FileWatcher",
+      "file": "file_watcher.py",
+      "description": "Basic file system monitoring component",
+      "enabled": true
+    },
+    {
+      "name": "GBStudioBuild",
+      "file": "gbstudio_build.py",
+      "description": "GB Studio project build automation",
+      "enabled": true
+    },
+    {
+      "name": "Notifier",
+      "file": "notifier.py",
+      "description": "Notification system component",
+      "enabled": true
+    },
+    {
+      "name": "ReportGen",
+      "file": "report_gen.py",
+      "description": "Automated report generation component",
+      "enabled": true
+    }
+  ]
+}

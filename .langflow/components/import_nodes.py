@@ -3,7 +3,7 @@ import json
 import shutil
 
 LANGFLOW_COMPONENTS_DIR = os.path.expanduser("~/.langflow/components")
-SOURCE_COMPONENTS = os.path.join(os.path.dirname(__file__), "components")
+SOURCE_COMPONENTS = os.path.join(os.path.dirname(__file__))
 
 def install_components():
     if not os.path.exists(SOURCE_COMPONENTS):

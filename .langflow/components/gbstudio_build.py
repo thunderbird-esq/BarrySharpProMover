@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import os
 import pathlib
 import subprocess
 
@@ -28,7 +29,7 @@ class GBStudioBuild(CustomComponent):
     def build(
         self,
         project_dir: str,
-        cli_path: str = "gbstudio-cli",
+        cli_path: str | None = None,  # Changed default to None
         open_emulator: bool = True,
         target: str = "rom",            # rom | web | all
         code: str | None = None,        # ← LangFlow injects this; we just ignore it
@@ -37,6 +38,10 @@ class GBStudioBuild(CustomComponent):
         pd = pathlib.Path(project_dir).expanduser().resolve()
         if not pd.exists():
             raise ValueError(f"Project dir not found: {pd}")
+
+        # Determine the CLI path
+        if cli_path is None:
+            cli_path = os.environ.get("GBSTUDIO_CLI_PATH", "gbstudio-cli")
 
         ts = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
         dist = pd / "dist" / ts

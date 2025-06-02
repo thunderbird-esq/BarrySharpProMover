@@ -8,8 +8,10 @@ set -euo pipefail
 
 # Configuration
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LANGFLOW_HOST="127.0.0.1"
-LANGFLOW_PORT="7860"
+VENV_PATH="$PROJECT_ROOT/venv" # Added for virtual environment
+# LangFlow server configuration: Use environment variables if set, otherwise use defaults.
+LANGFLOW_HOST="${LANGFLOW_HOST:-127.0.0.1}"
+LANGFLOW_PORT="${LANGFLOW_PORT:-7860}"
 PIDFILE="$PROJECT_ROOT/memory/automation.pid"
 LOGFILE="$PROJECT_ROOT/memory/automation.log"
 COMPONENTS_DIR="$PROJECT_ROOT/langflow_components"
@@ -38,6 +40,25 @@ log_error() {
     echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ❌ $1${NC}"
 }
 
+# --- Virtual Environment Activation ---
+# Attempt to activate the project's virtual environment.
+# All python3 and langflow commands should use this environment.
+if [[ -f "$VENV_PATH/bin/activate" ]]; then
+    log "Activating Python virtual environment from $VENV_PATH..."
+    # shellcheck source=venv/bin/activate
+    source "$VENV_PATH/bin/activate"
+    log_success "Virtual environment activated."
+else
+    log_error "Virtual environment not found at $VENV_PATH."
+    log_warning "Please set up the virtual environment for this project."
+    log_warning "Example setup steps (run from $PROJECT_ROOT):"
+    log_warning "  python3 -m venv venv"
+    log_warning "  source venv/bin/activate"
+    log_warning "  pip install -e ."
+    log_warning "  # This should install langflow and other dependencies from pyproject.toml"
+    exit 1
+fi
+
 # Check if automation is running
 is_running() {
     if [[ -f "$PIDFILE" ]]; then
@@ -65,19 +86,34 @@ start_automation() {
     mkdir -p "$(dirname "$PIDFILE")"
     mkdir -p "$(dirname "$LOGFILE")"
     
-    # Check dependencies
-    if ! command -v langflow &> /dev/null; then
-        log_error "LangFlow is not installed or not in PATH"
+    # Check external dependencies (like make, node)
+    if ! command -v make &> /dev/null; then
+        log_error "Make is not installed or not in PATH. Please install make."
         return 1
     fi
-    
-    if ! command -v make &> /dev/null; then
-        log_error "Make is not installed or not in PATH"
+
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js is not installed or not in PATH. It is required for GB Studio CLI."
+        log_warning "Please install Node.js (e.g., from https://nodejs.org/)."
+        return 1
+    fi
+
+    # Check dependencies within the virtual environment (python3, langflow)
+    # These checks ensure that the venv is sourced and has the necessary packages.
+    if ! command -v python3 &> /dev/null; then
+        log_error "Python3 is not found in the activated virtual environment."
+        log_warning "Ensure your virtual environment at $VENV_PATH is set up correctly and activated."
+        return 1
+    fi
+
+    if ! command -v langflow &> /dev/null; then
+        log_error "LangFlow is not found in the activated virtual environment."
+        log_warning "Ensure LangFlow is installed in $VENV_PATH (e.g., by running 'pip install -e .' in $PROJECT_ROOT, which should install dependencies from pyproject.toml)."
         return 1
     fi
     
     # Install/update custom components
-    log "Installing custom LangFlow components..."
+    log "Checking/Installing custom LangFlow components using venv python..."
     if [[ -f "$COMPONENTS_DIR/import_nodes.py" ]]; then
         cd "$PROJECT_ROOT"
         python3 "$COMPONENTS_DIR/import_nodes.py" || log_warning "Failed to install some components"

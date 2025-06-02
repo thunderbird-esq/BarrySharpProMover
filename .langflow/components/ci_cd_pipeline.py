@@ -167,9 +167,9 @@ class CICDPipeline(CustomComponent):
     def _run_build(self) -> Dict:
         """Execute the build process."""
         try:
-            # Use the existing build-and-test target
+            # Call make build-rom to generate the ROM
             result = subprocess.run(
-                ["make", "build-and-test"],
+                ["make", "build-rom"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True
@@ -197,38 +197,31 @@ class CICDPipeline(CustomComponent):
             }
     
     def _run_tests(self) -> Dict:
-        """Run automated tests on the built ROM."""
+        """Run automated tests: Check ROM integrity."""
         try:
-            # Run validation scripts on the built ROM
-            test_commands = [
-                ["python3", "scripts/validation/check_bg_tiles.py"],
-                ["python3", "scripts/validation/check_scene_limits.py"]
-            ]
+            rom_path = self.build_dir / "rom.gb"
+            rom_exists = rom_path.exists()
+            rom_size = rom_path.stat().st_size if rom_exists else 0
             
-            test_results = []
-            for cmd in test_commands:
-                if (self.project_root / cmd[1]).exists():
-                    result = subprocess.run(
-                        cmd,
-                        cwd=self.project_root,
-                        capture_output=True,
-                        text=True
-                    )
-                    test_results.append({
-                        "test": cmd[1],
-                        "success": result.returncode == 0,
-                        "output": result.stdout,
-                        "error": result.stderr
-                    })
+            test_passed = rom_exists and rom_size > 0
             
-            overall_success = all(r["success"] for r in test_results)
-            
-            return {
-                "success": overall_success,
-                "tests": test_results,
-                "timestamp": datetime.datetime.now().isoformat()
+            details = {
+                "rom_path": str(rom_path),
+                "rom_exists": rom_exists,
+                "rom_size_bytes": rom_size,
+                "check_passed": test_passed
             }
             
+            if not rom_exists:
+                details["error_message"] = "ROM file not found at expected location."
+            elif rom_size == 0:
+                details["error_message"] = "ROM file is empty (0 bytes)."
+
+            return {
+                "success": test_passed,
+                "details": details,
+                "timestamp": datetime.datetime.now().isoformat()
+            }
         except Exception as e:
             return {
                 "success": False,

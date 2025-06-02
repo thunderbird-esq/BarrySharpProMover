@@ -2,6 +2,50 @@
 
 This guide covers the enhanced automation system that provides continuous integration, deployment, and file monitoring capabilities for the Barry Sharp Pro Mover project.
 
+## Environment Setup
+
+Before using the automation system, it's crucial to set up a dedicated Python virtual environment for this project. This ensures that all Python-based tools, including LangFlow and the custom project components, run with consistent dependencies.
+
+The main control script, `scripts/automation_control.sh`, is designed to automatically detect and activate this virtual environment if it's located at `$PROJECT_ROOT/venv/`.
+
+**1. Create the Virtual Environment:**
+Navigate to the project root directory (`barry-sharp-pro-mover`) in your terminal and run:
+```bash
+python3 -m venv venv
+```
+This will create a `venv` directory within your project.
+
+**2. Activate the Virtual Environment:**
+On macOS and Linux:
+```bash
+source venv/bin/activate
+```
+On Windows (Git Bash or WSL):
+```bash
+source venv/Scripts/activate
+```
+Your terminal prompt should change to indicate that the virtual environment is active (e.g., `(venv) your-prompt$`).
+
+**3. Install Dependencies:**
+With the virtual environment activated, install the project's components and their dependencies (including LangFlow). The `pyproject.toml` file defines these.
+```bash
+pip install -e .
+```
+The `-e .` flag installs the project in "editable" mode, which is useful for development as changes to your local component code are reflected immediately. This command should install `langflow` as it's listed as a dependency in `pyproject.toml`, along with other necessary packages.
+
+**Verification:**
+After installation, you can verify that `langflow` is installed in your venv:
+```bash
+which langflow
+# Should point to .../barry-sharp-pro-mover/venv/bin/langflow
+langflow --version
+```
+
+**Note on the `langflow/` subdirectory:**
+The project includes a `langflow/` subdirectory which might contain a full source code of LangFlow. This is primarily for development reference or specific LangFlow development tasks related to this project. **The automation system and your daily workflow should rely on the version of LangFlow installed into your `venv/` via `pip`, not directly on this subdirectory.** The `automation_control.sh` script will use the `langflow` command made available by activating the `venv/`.
+
+Once the environment is set up and activated, you can use `scripts/automation_control.sh` to manage the automation system. If you open a new terminal, remember to reactivate the virtual environment (`source venv/bin/activate`). The `automation_control.sh` script itself will also attempt to activate the `venv/` directory if it finds it, and will check for essential external tools like `make` and `node`.
+
 ## Overview
 
 The enhanced automation system includes:
@@ -14,17 +58,9 @@ The enhanced automation system includes:
 
 ## Quick Start
 
-### 1. Install Dependencies
+This section assumes you have completed the "Environment Setup" steps above, including creating and activating the virtual environment and installing dependencies with `pip install -e .`.
 
-```bash
-# Install LangFlow (if not already installed)
-pip install langflow
-
-# Install project dependencies
-pip install -r requirements.txt  # if exists
-```
-
-### 2. Start the Automation System
+### 1. Start the Automation System
 
 ```bash
 # Using the control script
@@ -37,9 +73,39 @@ make automation-start
 make dev-start
 ```
 
+### 2. GB Studio CLI Dependency Management
+
+A crucial part of the automation, especially for building the game, is the GB Studio Command Line Interface (CLI).
+
+**Recommendation: Global Installation**
+
+It is strongly recommended to install `gb-studio-cli` globally and ensure it is available in your system's `PATH`. This aligns with the default configuration of the build tools (`Makefile` and LangFlow components) which assume `gb-studio-cli` is accessible directly.
+
+If you are unsure how to install it, please refer to the official GB Studio documentation. If it's an npm package, the command would typically be:
+```bash
+npm install -g gb-studio-cli
+```
+*(Always verify the installation command from official GB Studio resources.)*
+
+**Alternative: Local/Specific Version**
+
+If you need to use a specific version of the CLI for this project, or prefer not to install it globally:
+1.  Download or place the `gb-studio-cli.js` file (and its necessary dependencies, often found in a `cli` or `out/cli` folder within the main GB Studio software directory) into a known location. This could be within a `tools/` directory in this project, for example.
+2.  Set the `GBSTUDIO_CLI_PATH` environment variable to the full path of this `gb-studio-cli.js` file.
+    *   On Linux/macOS:
+        ```bash
+        export GBSTUDIO_CLI_PATH="/path/to/your/gb-studio-cli.js"
+        ```
+    *   On Windows (PowerShell):
+        ```powershell
+        $env:GBSTUDIO_CLI_PATH = "C:\path\to\your\gb-studio-cli.js"
+        ```
+    The build scripts and LangFlow components will use this path. The default value if this variable is not set is `gb-studio-cli`, assuming it's in your system's PATH.
+
 ### 3. Access the LangFlow UI
 
-Open your browser to: http://127.0.0.1:7860
+The LangFlow UI will be available at the address configured by `LANGFLOW_HOST` and `LANGFLOW_PORT` environment variables (defaults to http://127.0.0.1:7860).
+Open your browser to this address after starting the automation system.
 
 ### 4. Monitor Status
 
@@ -95,7 +161,7 @@ Monitors project files and automatically triggers builds when changes are detect
 
 ### GB Studio Build Component (`gbstudio_build.py`)
 
-Direct integration with GB Studio CLI for ROM compilation.
+Direct integration with GB Studio CLI for ROM compilation. This component relies on `gb-studio-cli` being available, either in the system `PATH` or via the `GBSTUDIO_CLI_PATH` environment variable as described in the "GB Studio CLI Dependency Management" section.
 
 **Features:**
 - ROM and web builds
@@ -120,7 +186,12 @@ Generates comprehensive status reports including:
 
 ## Automation Control Script
 
-The `scripts/automation_control.sh` script provides easy management of the automation system.
+The `scripts/automation_control.sh` script is the primary tool for managing the automation system.
+Key features of the script:
+- Automatically attempts to activate the Python virtual environment from `$PROJECT_ROOT/venv/`.
+- Checks for essential system dependencies like `make` and `Node.js` before starting.
+- Uses environment variables for configuration (e.g., `LANGFLOW_HOST`, `LANGFLOW_PORT`).
+- Manages the LangFlow server and the file watcher process.
 
 ### Commands
 
@@ -220,13 +291,40 @@ barry-sharp-pro-mover/
 
 ### Environment Variables
 
-```bash
-# LangFlow configuration
-export LANGFLOW_HOST="127.0.0.1"
-export LANGFLOW_PORT="7860"
+The `scripts/automation_control.sh` script and other parts of the system can be configured using environment variables.
 
-# Project paths
+**LangFlow Server Configuration:**
+These variables allow you to customize the host and port where the LangFlow server (started by `automation_control.sh`) will listen.
+-   `LANGFLOW_HOST`: Defines the IP address or hostname for the LangFlow server.
+    *   Default: `127.0.0.1`
+    *   Example: `export LANGFLOW_HOST="0.0.0.0"` (to listen on all network interfaces)
+-   `LANGFLOW_PORT`: Defines the port number for the LangFlow server.
+    *   Default: `7860`
+    *   Example: `export LANGFLOW_PORT="8000"`
+
+```bash
+# Example: Run LangFlow on a different port
+export LANGFLOW_PORT="8080"
+./scripts/automation_control.sh start
+```
+
+**Project Paths:**
+While generally not needed to be overridden as they are dynamically determined, these illustrate internal path management.
+```bash
+# Project paths (typically auto-detected)
 export PROJECT_ROOT="/path/to/barry-sharp-pro-mover"
+```
+
+**GB Studio CLI Path:**
+This variable specifies the path to the `gb-studio-cli.js` executable.
+-   Default: `gb-studio-cli` (script assumes it's in the system PATH)
+-   Example: `export GBSTUDIO_CLI_PATH="/usr/local/gb-studio/gb-studio-cli.js"`
+Refer to the "GB Studio CLI Dependency Management" section for more details.
+
+**Logging Level for LangFlow:**
+```bash
+# Enable verbose logging for LangFlow components
+export LANGFLOW_LOG_LEVEL=DEBUG
 ```
 
 ### File Watcher Settings

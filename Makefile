@@ -15,18 +15,20 @@ check-json:
 	find . -name "*.json" -exec jq . {} \;
 
 # Build targets
+GBSTUDIO_CLI_PATH ?= gb-studio-cli
+
 build-rom:
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" export BARRY-SHARP-PRO-MOVER-1.gbsproj build/
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" make:rom BARRY-SHARP-PRO-MOVER-1.gbsproj build/game.gb
+	node "$(GBSTUDIO_CLI_PATH)" export BARRY-SHARP-PRO-MOVER-1.gbsproj build/
+	node "$(GBSTUDIO_CLI_PATH)" make:rom BARRY-SHARP-PRO-MOVER-1.gbsproj build/game.gb
 	cp build/game.gb build/rom.gb
 
 build-web:
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" make:web BARRY-SHARP-PRO-MOVER-1.gbsproj build/
+	node "$(GBSTUDIO_CLI_PATH)" make:web BARRY-SHARP-PRO-MOVER-1.gbsproj build/
 
-build-and-test: build-rom
+build-and-launch-emulator: build-rom
 	./scripts/build/launch_openemu.sh
 
 hash-rom: build-rom
 	md5sum ./build/rom.gb > ./build/rom.md5
 
-.PHONY: build-dirs check-bg check-scenes check-json build-rom build-web build-and-test hash-rom
+.PHONY: build-dirs check-bg check-scenes check-json build-rom build-web build-and-launch-emulator hash-rom

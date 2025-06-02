@@ -30,13 +30,11 @@
     },
     {
       "id": "enhanced_file_watcher",
-      "type": "PythonNode",
+      "type": "EnhancedFileWatcher",
       "name": "Enhanced File Watcher",
       "description": "Advanced file monitoring with automatic CI/CD triggering",
       "position": {"x": 500, "y": 50},
       "data": {
-        "script_path": "langflow_components/enhanced_file_watcher.py",
-        "class_name": "EnhancedFileWatcher",
         "method": "build",
         "args": {
           "watch_directories": [
@@ -67,13 +65,11 @@
     },
     {
       "id": "ci_cd_pipeline",
-      "type": "PythonNode",
+      "type": "CICDPipeline",
       "name": "CI/CD Pipeline",
       "description": "Automated build, test, and deployment pipeline",
       "position": {"x": 500, "y": 200},
       "data": {
-        "script_path": "langflow_components/ci_cd_pipeline.py",
-        "class_name": "CICDPipeline",
         "method": "build",
         "args": {
           "trigger_event": "manual",
@@ -86,13 +82,11 @@
     },
     {
       "id": "gb_studio_build",
-      "type": "PythonNode",
+      "type": "GBStudioBuild",
       "name": "GB Studio Build",
       "description": "Direct GB Studio compilation component",
       "position": {"x": 500, "y": 350},
       "data": {
-        "script_path": "langflow_components/gbstudio_build.py",
-        "class_name": "GBStudioBuild",
         "method": "build",
         "args": {
           "project_dir": ".",
@@ -128,12 +122,11 @@
     },
     {
       "id": "enhanced_report_gen",
-      "type": "PythonNode",
+      "type": "ReportGen",
       "name": "Enhanced Report Generator",
       "description": "Generates comprehensive status reports with automation metrics",
       "position": {"x": 700, "y": 300},
       "data": {
-        "script_path": "langflow_components/report_gen.py",
         "method": "generate_report",
         "args": {
           "include_automation_stats": true,
@@ -144,12 +137,11 @@
     },
     {
       "id": "notification_hub",
-      "type": "PythonNode",
+      "type": "Notifier",
       "name": "Notification Hub",
       "description": "Centralized notification system for all automation events",
       "position": {"x": 900, "y": 150},
       "data": {
-        "script_path": "langflow_components/notifier.py",
         "method": "notify",
         "args": {
           "method": "cli",

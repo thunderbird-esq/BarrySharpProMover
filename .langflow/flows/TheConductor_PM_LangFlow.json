@@ -44,9 +44,8 @@
     },
     {
       "id": "file_watcher",
-      "type": "PythonNode",
+      "type": "FileWatcher",
       "name": "File Watcher",
-      "script_path": "langflow_components/file_watcher.py",
       "args": {
         "watch_dirs": [
           "assets/sprites/",
@@ -76,9 +75,8 @@
     },
     {
       "id": "report_gen",
-      "type": "PythonNode",
+      "type": "ReportGen",
       "name": "Report Generator",
-      "script_path": "langflow_components/report_gen.py",
       "args": {
         "ledger_path": "memory/pm_ledger.jsonl",
         "queue_path": "memory/approval_queue.json",
@@ -88,9 +86,8 @@
     },
     {
       "id": "api_notifier",
-      "type": "PythonNode",
+      "type": "Notifier",
       "name": "API Notifier",
-      "script_path": "langflow_components/notifier.py",
       "args": {
         "notify_type": "cli",
         "notify_script": "scripts/notify_cli.sh"

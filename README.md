@@ -1,97 +1,49 @@
-# Barry Sharp Pro Mover - GB Studio Game Project
+# Run LangFlow with Custom Components
 
-A Game Boy game developed using GB Studio with integrated LangFlow automation and build tools.
+This script automates the process of running LangFlow 1.4.2 with custom components.
 
-## Project Structure
+## Prerequisites
 
-### Core Game Files
-- `BARRY-SHARP-PRO-MOVER-1.gbsproj` - Main GB Studio project file
-- `assets/` - All game assets (sprites, backgrounds, music, sounds, etc.)
-- `build/` - Compiled game outputs (ROM and web builds)
+1.  **LangFlow Virtual Environment:**
+    *   Ensure you have a Python virtual environment set up for LangFlow.
+    *   The script expects this environment to be located at `./langflow_env/`.
+    *   If you haven't created one, you can do so with:
+        ```bash
+        python3 -m venv langflow_env
+        ```
+    *   Activate it:
+        ```bash
+        source langflow_env/bin/activate
+        ```
+    *   Install LangFlow 1.4.2 (and any other necessary packages) within this environment:
+        ```bash
+        pip install langflow==1.4.2
+        ```
+    *   Deactivate it for now:
+        ```bash
+        deactivate
+        ```
 
-### Development Tools
-- `Makefile` - Build automation using GB Studio CLI
-- `scripts/` - Development and validation scripts
-  - `build/` - Build-related scripts
-  - `validation/` - Asset validation tools
-- `langflow_components/` - Custom LangFlow components for automation
-- `langflow_projects/` - LangFlow workflow definitions
+2.  **Custom Components:**
+    *   Place your custom LangFlow components in the following directory structure:
+        `./.langflow/components/custom_components/`
+    *   The `custom_components` directory should contain your component Python files (e.g., `my_component.py`).
 
-### Documentation
-- `docs/` - Project documentation organized by category
-  - `design/` - Game design documents
-  - `shared/` - General project documentation
-  - `art/`, `code/`, `dialogue/`, `music/` - Category-specific docs
+## How to Run
 
-### Project Management
-- `memory/` - Project state and approval tracking
-- `feedback/` - User feedback and testing results
-- `staging/` - Temporary staging area for outputs
-- `vectorstore/` - Knowledge base storage
+1.  **Make the script executable (if not already):**
+    ```bash
+    chmod +x run_langflow.py
+    ```
 
-## Quick Start
+2.  **Execute the script:**
+    ```bash
+    ./run_langflow.py
+    ```
 
-### Building the Game
-```bash
-# Build ROM file
-make build-rom
+The script will:
+*   Activate the `./langflow_env/` virtual environment.
+*   Set the `LANGFLOW_COMPONENTS_PATH` to point to your custom components directory.
+*   Start LangFlow 1.4.2.
 
-# Build web version
-make build-web
-
-# Clean build artifacts
-make clean
-```
-
-### Development Scripts
-```bash
-# Validate assets
-./scripts/validation/check_bg_tiles.py
-./scripts/validation/check_scene_limits.py
-
-# Sync GB Studio resources
-./scripts/sync_gbsres.sh
-
-# Create project snapshot
-./scripts/snapshot.sh
-```
-
-### LangFlow Integration
-```bash
-# Start LangFlow server
-./start_langflow.sh
-
-# Bootstrap project management
-./bootstrap_pm_backbone.sh
-```
-
-## Asset Organization
-
-All game assets are consolidated in the `assets/` directory:
-- `backgrounds/` - Background images
-- `sprites/` - Character and object sprites
-- `music/` - Background music files
-- `sounds/` - Sound effects
-- `fonts/` - Custom fonts
-- `palettes/` - Color palettes
-- `tilesets/` - Tile graphics
-- `ui/` - User interface elements
-
-## Build System
-
-The project uses a Makefile that leverages the GB Studio CLI for consistent builds:
-- Automated ROM compilation
-- Web build generation
-- Asset validation
-- Clean build management
-
-## Requirements
-
-- GB Studio (with CLI tools)
-- Node.js (for GB Studio CLI)
-- Python 3.x (for validation scripts)
-- LangFlow (for automation workflows)
-
-## Contributing
-
-Refer to the documentation in `docs/` for development guidelines and project specifications.
+LangFlow should then be accessible in your web browser (usually at `http://127.0.0.1:7860`), and your custom components should be available in the LangFlow interface.

@@ -23,3 +23,26 @@ node_modules/
 *.wav
 assets.bak/
 *.swp
+
+# Python virtual environment
+venv/
+
+# Langflow submodule/vendored library
+langflow/
+
+# Build output
+build/
+
+# Vector stores
+vectorstore/
+
+# Python cache
+*.pyc
+__pycache__/
+
+# Egg info
+*.egg-info/
+
+# Pytest cache
+.pytest_cache/
+tests/.pytest_cache/

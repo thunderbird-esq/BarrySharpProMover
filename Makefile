@@ -1,3 +1,6 @@
+# Path to the GB Studio CLI executable. Can be overridden, e.g.: make build-rom GB_STUDIO_CLI=/custom/path/gb-studio-cli.js
+GB_STUDIO_CLI ?= /Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js
+
 # GB Studio Build Automation Targets
 
 # Ensure build directories exist
@@ -16,12 +19,12 @@ check-json:
 
 # Build targets
 build-rom:
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" export BARRY-SHARP-PRO-MOVER-1.gbsproj build/
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" make:rom BARRY-SHARP-PRO-MOVER-1.gbsproj build/game.gb
+	node "$(GB_STUDIO_CLI)" export BARRY-SHARP-PRO-MOVER-1.gbsproj build/
+	node "$(GB_STUDIO_CLI)" make:rom BARRY-SHARP-PRO-MOVER-1.gbsproj build/game.gb
 	cp build/game.gb build/rom.gb
 
 build-web:
-	node "/Users/madisonmilesmedia/gb-studio/out/cli/gb-studio-cli.js" make:web BARRY-SHARP-PRO-MOVER-1.gbsproj build/
+	node "$(GB_STUDIO_CLI)" make:web BARRY-SHARP-PRO-MOVER-1.gbsproj build/
 
 build-and-test: build-rom
 	./scripts/build/launch_openemu.sh

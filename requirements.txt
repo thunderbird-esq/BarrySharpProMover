@@ -1,0 +1,12 @@
+langflow>=1.4
+langchain
+langchain_community
+faiss-cpu
+ollama
+python-dotenv
+fastapi
+uvicorn
+
+# Note: The 'ollama' package provides client libraries for Ollama.
+# Ollama itself (the server/engine) must be installed and running separately.
+# See https://ollama.com/ for installation instructions.
